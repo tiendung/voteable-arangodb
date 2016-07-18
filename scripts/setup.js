@@ -1,0 +1,65 @@
+'use strict';
+const db = require('@arangodb').db;
+const documentCollections = [
+  "users",
+  "articles"
+];
+const edgeCollections = [
+  "votes",
+  "relations"
+];
+
+for (const name of documentCollections) {
+  if (!db._collection(name)) {
+    db._createDocumentCollection(name);
+  } else if (module.context.isProduction) {
+    console.warn(`collection ${name} already exists. Leaving it untouched.`);
+  }
+}
+
+for (const name of edgeCollections) {
+  if (!db._collection(name)) {
+    db._createEdgeCollection(name);
+  } else if (module.context.isProduction) {
+    console.warn(`collection ${name} already exists. Leaving it untouched.`);
+  }
+}
+
+
+// Data seeding ...
+var user1 = db.users.save({name: 'user1'});
+var user2 = db.users.save({name: 'user2'});
+var user3 = db.users.save({name: 'user3'});
+var article1 = db.articles.save({title: 'article1'});
+var article2 = db.articles.save({title: 'article2'});
+
+var voting = require('../models/voting');
+
+console.log('-- INNER VOTE --');
+
+console.log(`VOTING: ${user1._id} voteUp ${article1._id} ...`);
+console.log(voting.embedVoteUp(user1._id, article1._id));
+
+console.log(`VOTING: ${user1._id} voteDown ${article1._id} ...`);
+console.log(voting.embedVoteDown(user1._id, article1._id));
+
+console.log(`VOTING: ${user2._id} voteUp ${article1._id} ...`);
+console.log(voting.embedVoteUp(user2._id, article1._id));
+
+console.log(`VOTING: ${user3._id} voteDown ${article1._id} ...`);
+console.log(voting.embedVoteDown(user3._id, article1._id));
+
+
+console.log('-- EDGE VOTE --');
+
+console.log(`VOTING: ${user1._id} voteUp ${article2._id} ...`);
+console.log(voting.edgeVoteUp(user1._id, article2._id));
+
+console.log(`VOTING: ${user1._id} voteDown ${article2._id} ...`);
+console.log(voting.edgeVoteDown(user1._id, article2._id));
+
+console.log(`VOTING: ${user2._id} voteUp ${article2._id} ...`);
+console.log(voting.edgeVoteUp(user2._id, article2._id));
+
+console.log(`VOTING: ${user3._id} voteDown ${article2._id} ...`);
+console.log(voting.edgeVoteDown(user3._id, article2._id));
