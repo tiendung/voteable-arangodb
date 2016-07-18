@@ -8,7 +8,8 @@ Those two voting algorithms are implemented as `embedVote` function and `edgeVot
  * Add unit tests to ensure correctness of `embedVote` and `edgeVote`
  * Create HTTP APIs to do to test Foxx performance and stability in real-life situations
  * Test performance of `embedVote` vs `edgeVote` to see advantage and trade-off of both methods
- * Re-implement `embedVote` and/or `edgeVote` in node.js using arangojs (ArangoDB JavaScript adaptor) to compare performance of Foxx and Node.js + db adapter
+ * Re-implement `embedVote` and/or `edgeVote` in node.js + ArangoDB to compare performance of Foxx and node.js + db adapter
+* Re-implement `embedVote` and/or `edgeVote` in node.js + MongoDB to compare performance among node.js + ArangoDB, Foxx + ArangoDB and node.js + MongoDB
 
 ### embedVote
 `embedVote` uses `upVoterIds` and `downVoterIds` to store vote data in-side the voteableObject so it can 
