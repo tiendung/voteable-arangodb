@@ -91,7 +91,13 @@ function edgeVote(voterId, voteableId, type) {
       write: [ 'votes', voteableCollection ]
     },
     waitForSync: true,
+
     action: function () {
+
+      var db = require("internal").db;
+
+      // UPSERT .. mean: If there is no vote _from voterId _to voteableId, create it with INSERT ...
+      // Else update vote data with UPDATE ...
       var result = db._query(`
         UPSERT { _from: "${voterId}", _to: "${voteableId}" }
         INSERT { _from: "${voterId}", _to: "${voteableId}", type: "${type}", count: 1, createdAt: DATE_NOW() }
@@ -120,14 +126,14 @@ function edgeVote(voterId, voteableId, type) {
         if (result.isNewVote) {
           if (type === 'up') {
             upVotesCountDelta = 1;
-          } else {
+          } else { // down vote
             downVotesCountDelta = 1;
           }
         } else { // re-vote
           if (type === 'up') {
             upVotesCountDelta = 1;
             downVotesCountDelta = -1;
-          } else {
+          } else { // down vote
             upVotesCountDelta = -1;
             downVotesCountDelta = 1;
           }
