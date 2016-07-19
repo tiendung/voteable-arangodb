@@ -44,7 +44,7 @@ var article2 = db.articles.save({title: 'article2'});
 
 var voting = require('../models/voting');
 
-console.log('-- INNER VOTE --');
+console.log('-- EMBED VOTE --');
 
 console.log(`VOTING: ${user1._id} voteUp ${article1._id} ...`);
 console.log(voting.embedVoteUp(user1._id, article1._id));
@@ -72,3 +72,20 @@ console.log(voting.edgeVoteUp(user2._id, article2._id));
 
 console.log(`VOTING: ${user3._id} voteDown ${article2._id} ...`);
 console.log(voting.edgeVoteDown(user3._id, article2._id));
+
+
+
+console.log('-- voteUp(), voteDown() VIA config() --');
+
+// Config voting module
+var myVoting = require('../models/voting').config({
+  upVotePoint: 1,
+  downVotePoint: -1,
+  method: 'embed'
+});
+
+console.log(`VOTING: ${user3._id} voteUp ${article1._id} ...`);
+console.log(myVoting.voteUp(user3._id, article1._id));
+
+console.log(`VOTING: ${user3._id} voteDown ${article1._id} ...`);
+console.log(myVoting.voteDown(user3._id, article1._id));

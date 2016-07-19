@@ -40,14 +40,24 @@ do voting and return tabulated data with-in single db query. Should be more effi
 ### Usage example
 
 ```js
-// extracted from scripts/setups.js
-
 var user1 = db.users.save({name: 'user1'});
 var user2 = db.users.save({name: 'user2'});
 var user3 = db.users.save({name: 'user3'});
 var article1 = db.articles.save({title: 'article1'});
 var article2 = db.articles.save({title: 'article2'});
 
+// Config voting module
+var myVoting = require('../models/voting').config({
+	upVotePoint: 1,
+	downVotePoint: -1,
+	method: 'embed'
+});
+
+myVoting.voteUp(user3.id, article1._id);
+myVoting.voteDown(user3.id, article1._id);
+
+// For testing `embed` vs `edge` directly, use following functions,
+// they use default vote up point (+1) and default vote down point (-1)
 var voting = require('../models/voting');
 
 voting.embedVoteUp(user1._id, article1._id);

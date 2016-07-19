@@ -1,20 +1,18 @@
 'use strict';
+const assert = require('assert');
 const _ = require('lodash');
 const db = require("@arangodb").db;
 
+const UP = 'up';
+const DOWN = 'down';
+const VOTE_TYPES = [ UP, DOWN ];
 const VOTE_POINTS = {
-  up: +1,
+  up: 1, 
   down: -1
 };
-const VOTE_TYPES = _.keys(VOTE_POINTS);
-
-const REMAIN_VOTE_TYPES = {
-  up: 'down',
-  down: 'up'
-}
 
 function isValidVoteType(type) {
-  if (VOTE_POINTS[type] !== null) {
+  if (type === UP || type === DOWN) {
     return true;
   }
 }
@@ -26,7 +24,11 @@ function voterIdsFieldName(type) {
 }
 
 function remainVoterIdsFieldName(type) {
-  return voterIdsFieldName(REMAIN_VOTE_TYPES[type]);
+  switch (type) {
+    case UP: type = DOWN; break;
+    case DOWN: type = UP; break;
+  }
+  return voterIdsFieldName(type);
 }
 
 function getCollectionNameFromId(voteableId) {
@@ -37,10 +39,8 @@ function getCollectionNameFromId(voteableId) {
 
 // Add upVoterIds and downVoterIds array in to the voteable objects
 // Return tabulated data or NULL (if voterId already voted)
-function embedVote(voterId, voteableId, type) {
-  if (!isValidVoteType(type)) {
-    throw "vote type must be in " + VOTE_TYPES;
-  }
+function embedVote(voterId, voteableId, type, vote_points) {
+  assert(isValidVoteType(type), "vote type must be in " + VOTE_TYPES);
 
   var voterIdsField = voterIdsFieldName(type);
   var remainVoterIdsField = remainVoterIdsFieldName(type);
@@ -61,19 +61,17 @@ function embedVote(voterId, voteableId, type) {
         id: NEW._id,
         upVotes: upVotesCount,
         downVotes: downVotesCount,
-        point: ${VOTE_POINTS.up}*upVotesCount + ${VOTE_POINTS.down}*downVotesCount
+        point: ${vote_points[UP]}*upVotesCount + ${vote_points[DOWN]}*downVotesCount
       }
   `
-  // console.log(queryStatement); /* DEBUG */
+  // console.log(queryStatement.replace(/\s+/g, " ")); /* DEBUG */
   return db._query(queryStatement).toArray()[0];
 }
 
 
 // Using additional votes edgeCollection
-function edgeVote(voterId, voteableId, type) {
-  if (!isValidVoteType(type)) {
-    throw "vote type must be in " + VOTE_TYPES;
-  }
+function edgeVote(voterId, voteableId, type, vote_points) {
+  assert(isValidVoteType(type), "vote type must be in " + VOTE_TYPES);
 
   var voteableCollection = getCollectionNameFromId(voteableId);
   var tabulatedData;
@@ -149,7 +147,7 @@ function edgeVote(voterId, voteableId, type) {
             UPDATE voteableObj WITH {
                 upVotesCount: upVotesCount,
                 downVotesCount: downVotesCount,
-                totalVotePoint: ${VOTE_POINTS.up}*upVotesCount + ${VOTE_POINTS.down}*downVotesCount
+                totalVotePoint: ${vote_points[UP]}*upVotesCount + ${vote_points[DOWN]}*downVotesCount
             } IN ${voteableCollection}
 
             RETURN {
@@ -167,20 +165,57 @@ function edgeVote(voterId, voteableId, type) {
 
 
 module.exports = {
-  VOTE_POINTS: VOTE_POINTS,
-  VOTE_TYPES: VOTE_TYPES,
+  // Usage: config({ upVotePoint: 1, downVotePoint: -1, method: 'edge' })
+  config(opts = {}) {
+    assert(
+      !isNaN(opts.upVotePoint) && !isNaN(opts.downVotePoint), 
+      "upVotePoint and downVotePoint options must be a number"
+    )
 
+    var vote_points = {};
+    vote_points[UP] = opts.upVotePoint;
+    vote_points[DOWN] = opts.downVotePoint;
+
+    switch (opts.method) {
+      case 'embed':
+        return {
+          voteUp(voterId, voteableId) {
+            return embedVote(voterId, voteableId, UP, vote_points);
+          },
+          voteDown(voterId, voteableId) {
+            return embedVote(voterId, voteableId, DOWN, vote_points);
+          }
+        };
+      case 'edge':
+        return {
+          voteUp(voterId, voteableId) {
+            return edgeVote(voterId, voteableId, UP, vote_points);
+          },
+          voteDown(voterId, voteableId) {
+            return edgeVote(voterId, voteableId, DOWN, vote_points);
+          }
+        };
+      default:
+        throw "method option must be 'embed' or 'edge'";
+    }
+  },
+
+  // Functions for testing purpose
   embedVoteUp(voterId, voteableId) {
-    return embedVote(voterId, voteableId, 'up');
+    return embedVote(voterId, voteableId, UP, VOTE_POINTS);
   },
   embedVoteDown(voterId, voteableId) {
-    return embedVote(voterId, voteableId, 'down');
+    return embedVote(voterId, voteableId, DOWN, VOTE_POINTS);
   },
 
   edgeVoteUp(voterId, voteableId) {
-    return edgeVote(voterId, voteableId, 'up');
+    return edgeVote(voterId, voteableId, UP, VOTE_POINTS);
   },
   edgeVoteDown(voterId, voteableId) {
-    return edgeVote(voterId, voteableId, 'down');
+    return edgeVote(voterId, voteableId, DOWN, VOTE_POINTS);
   }
 };
+
+// Default will use edge voting methods
+module.exports.voteUp = module.exports.edgeVoteUp;
+module.exports.voteDown = module.exports.edgeVoteDown;
