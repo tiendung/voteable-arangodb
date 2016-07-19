@@ -25,6 +25,15 @@ for (const name of edgeCollections) {
   }
 }
 
+// Indexing ...
+
+// Create index to ensure a vote _from userId _to voteableObjId is unique
+// https://docs.arangodb.com/3.0/Manual/Indexing/Hash.html#ensure-uniqueness-of-relations-in-edge-collections
+db.votes.ensureIndex({ type: "hash", fields: [ "_from", "_to" ], unique: true });
+
+// Create indexes for upVoterIds array and downVoterIds array
+db.articles.ensureIndex({ type: "hash", fields: ["upVoterIds[*]"], sparse: true });
+db.articles.ensureIndex({ type: "hash", fields: ["downVoterIds[*]"], sparse: true });
 
 // Data seeding ...
 var user1 = db.users.save({name: 'user1'});
