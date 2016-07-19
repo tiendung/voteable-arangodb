@@ -94,9 +94,9 @@ function edgeVote(voterId, voteableId, type) {
     action: function () {
       var result = db._query(`
         UPSERT { _from: "${voterId}", _to: "${voteableId}" }
-        INSERT { _from: "${voterId}", _to: "${voteableId}", type: "${type}", createdAt: DATE_NOW() }
-        UPDATE { type: "${type}", updatedAt: DATE_NOW() } IN votes
-        RETURN { isNewVote: OLD ? false : true, isSameVote: (OLD && OLD.type) == NEW.type }
+        INSERT { _from: "${voterId}", _to: "${voteableId}", type: "${type}", count: 1, createdAt: DATE_NOW() }
+        UPDATE { type: "${type}", count: OLD.count + 1,  updatedAt: DATE_NOW() } IN votes
+        RETURN { isNewVote: IS_NULL(OLD), isSameVote: OLD && (OLD.type == NEW.type) }
       `).toArray()[0];
       // console.log(result); /* DEBUG */
 
