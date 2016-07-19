@@ -33,8 +33,8 @@ do voting and return tabulated data with-in single db query. Should be more effi
  * Can use graph alorithm to do recommendation. For example: show me few articles that are got most of up vote from my friends
 
 **CONS**
- * Need to store additional tabulated data fields (upVotesCount, downVotesCount, totalVotePoint) inside `voteableObject
- * Need to use transaction to ensure data consistency while create/update `voteObject` and update tabulated data in `voteableObject'
+ * Need to store additional tabulated data fields (upVotesCount, downVotesCount, totalVotePoint) inside voteableObject
+ * Need to use transaction to ensure data consistency while create/update `voteObject` and update tabulated data in voteableObject
  
 
 ### Usage example
