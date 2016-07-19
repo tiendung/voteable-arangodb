@@ -26,9 +26,7 @@ function voterIdsFieldName(type) {
 }
 
 function remainVoterIdsFieldName(type) {
-  if (isValidVoteType(type)) {
-    return REMAIN_VOTE_TYPES[type] + 'VoterIds';
-  }  
+  return voterIdsFieldName(REMAIN_VOTE_TYPES[type]);
 }
 
 function getCollectionNameFromId(voteableId) {
