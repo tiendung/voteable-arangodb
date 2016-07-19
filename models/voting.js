@@ -78,10 +78,16 @@ function edgeVote(voterId, voteableId, type) {
   var voteableCollection = getCollectionNameFromId(voteableId);
   var tabulatedData;
 
+  // While excecuting below transaction, both 'votes' and voteableCollection are locked to
+  // ensure data isolation and consistency:
+  // * No-one can modify those collections while transaction is being executed
+  // * All database changes will be success or failure together
   db._executeTransaction({
     collections: {
       write: [ 'votes', voteableCollection ]
     },
+
+    // Excecuting transaction synchronously to return the tabulated data after transaction is done
     waitForSync: true,
 
     action: function () {
