@@ -59,9 +59,9 @@ function embedVote(voterId, voteableId, type, vote_points) {
 
       RETURN {
         id: NEW._id,
-        upVotes: upVotesCount,
-        downVotes: downVotesCount,
-        point: ${vote_points[UP]}*upVotesCount + ${vote_points[DOWN]}*downVotesCount
+        upVotesCount: upVotesCount,
+        downVotesCount: downVotesCount,
+        totalVotePoint: ${vote_points[UP]}*upVotesCount + ${vote_points[DOWN]}*downVotesCount
       }
   `
   // console.log(queryStatement.replace(/\s+/g, " ")); /* DEBUG */
@@ -108,9 +108,9 @@ function edgeVote(voterId, voteableId, type, vote_points) {
           LET voteableObj = DOCUMENT("${voteableId}")
             RETURN {
               id: voteableObj._id,
-              upVotes: voteableObj.upVotesCount,
-              downVotes: voteableObj.downVotesCount,
-              point: voteableObj.totalVotePoint
+              upVotesCount: voteableObj.upVotesCount,
+              downVotesCount: voteableObj.downVotesCount,
+              totalVotePoint: voteableObj.totalVotePoint
             }
         `).toArray()[0];
 
@@ -152,9 +152,9 @@ function edgeVote(voterId, voteableId, type, vote_points) {
 
             RETURN {
               id: NEW._id,
-              upVotes: NEW.upVotesCount,
-              downVotes: NEW.downVotesCount,
-              point: NEW.totalVotePoint
+              upVotesCount: NEW.upVotesCount,
+              downVotesCount: NEW.downVotesCount,
+              totalVotePoint: NEW.totalVotePoint
             }
         `).toArray()[0];
       }
