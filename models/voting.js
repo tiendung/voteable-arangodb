@@ -48,12 +48,6 @@ function embedVote(voterId, voteableId, type) {
   var remainVoterIdsField = remainVoterIdsFieldName(type);
   var voteableCollection = getCollectionNameFromId(voteableId);
 
-  // FOR voteableObj IN ${voteableCollection}
-  //   FILTER voteableObj._id == "${voteableId}"
-  //     LET neverVotedUp = ( voteableObj.upVoterIds == null OR "${voterId}" NOT IN voteableObj.upVoterIds )
-  //     LET neverVotedDown = ( voteableObj.downVoterIds == null OR "${voterId}" NOT IN voteableObj.downVoterIds )
-  //     LET isNewVote = neverVotedDown && neverVotedUp
-
   var queryStatement = `
     LET voteableObj = DOCUMENT("${voteableId}")
 
