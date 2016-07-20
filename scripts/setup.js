@@ -42,7 +42,7 @@ var user3 = db.users.save({name: 'user3'});
 var article1 = db.articles.save({title: 'article1'});
 var article2 = db.articles.save({title: 'article2'});
 
-var voting = require('../models/voting');
+var voting = require('../voting');
 
 console.log('-- EMBED VOTE --');
 
@@ -78,7 +78,7 @@ console.log(voting.edgeVoteDown(user3._id, article2._id));
 console.log('-- voteUp(), voteDown() VIA config() --');
 
 // Config voting module
-var myVoting = require('../models/voting').config({
+var myVoting = require('../voting').config({
   upVotePoint: 1,
   downVotePoint: -1,
   method: 'embed'
