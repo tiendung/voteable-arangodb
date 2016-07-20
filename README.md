@@ -91,7 +91,7 @@ Open Web Interface at [localhost:8529](http://localhost:8529)
 * `password`:
 * Then Select DB `_system` or press enter
 * Click `DATABASES` > `Add Database` > enter **voteable_development** to `Name*:` > click `Create`
-* Repeat above step to create **lxcd_test**
+* Repeat above step to create **voteable_test**
 * Click `DB:_SYSTEM` at the top-right conner, click on drop down then select `voteable_development`
 * Click `Select DB: voteable_development` or press enter
 
