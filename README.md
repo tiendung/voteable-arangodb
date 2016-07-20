@@ -141,13 +141,6 @@ foxx-manager development /voteable --server.database voteable_development --serv
 ./restartApps.sh
 ```
 
-
-## The development app will reflect any code change
-
-* Open [localhost development app](http://localhost:8529/_db/voteable_development/voteable)
-* Do the code change
-* Refresh the web page to reflect the change
-
 ## Logging and debug
 
 ArangoDB's Foxx is JavaScript so just use `console.log()` to print out any information you want
