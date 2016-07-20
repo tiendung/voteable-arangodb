@@ -2,7 +2,7 @@
 
 Implement up / down voting solutions in Foxx using both embedded arrays and edgeCollection and compare pros and cons of them. 
 
-Those two voting algorithms are implemented as `embedVote` function and `edgeVote` function in `models/voting.js`
+Those two voting algorithms are implemented as `embedVote` function and `edgeVote` function in `voting.js`
 
 **TODO**
  * Add unit tests to ensure correctness of `embedVote` and `edgeVote`
@@ -17,19 +17,20 @@ do voting and return tabulated data with-in single db query. Should be more effi
 
 **PROS**
  * Do voting in only ONE db query
- * No need to store additional tabulated data fields (upVotesCount, downVotesCount, totalVotePoint) inside voteableObject
+ * Generate tabulated data on-the-fly (no need to store additional tabulated data fields (upVotesCount, downVotesCount, totalVotePoint) inside voteableObject)
 
 **CONS**
- * Need to create indexes `upVoterIds` and `downVoterIds` for every voteableCollections and do multiple queries or combined AQL query in order to find out all voteableObjects a user voted before
- * Cannot store history data like votedAt timestamp
+ * Need to create indexes `upVoterIds` and `downVoterIds` for every voteableCollections and do multiple queries in order to find out all voteableObjectIds a user voted before
+ * Cannot store history data like createdAt, updatedAt timestamps
  * Cannot use graph alorithm to do recommendation. For example: show me few articles that are got most of up vote from my friends
+ * Not efficient when number of votes for each objects is huge (thousands to ten-thousands)
 
 ### edgeVote
 `edgeVote` use `votes` egdgeCollection to store vote data and database transaction to create / update votes and update/query tabulated data store inside voteableObject to speed-up
 
 **PROS**
- * Find out all voteableObjects a user voted is much easier
- * Can store history data like votedAt timestamp
+ * Find out all voteableObjects a user voted before is much easier
+ * Can store history data like like createdAt, updatedAt timestamps
  * Can use graph alorithm to do recommendation. For example: show me few articles that are got most of up vote from my friends
 
 **CONS**
@@ -47,7 +48,7 @@ var article1 = db.articles.save({title: 'article1'});
 var article2 = db.articles.save({title: 'article2'});
 
 // Config voting module
-var myVoting = require('../models/voting').config({
+var myVoting = require('voting').config({
 	upVotePoint: 1,
 	downVotePoint: -1,
 	method: 'embed'
@@ -58,7 +59,7 @@ myVoting.voteDown(user3.id, article1._id);
 
 // For testing `embed` vs `edge` directly, use following functions,
 // they use default vote up point (+1) and default vote down point (-1)
-var voting = require('../models/voting');
+var voting = require('voting');
 
 voting.embedVoteUp(user1._id, article1._id);
 voting.embedVoteDown(user1._id, article1._id);
@@ -83,7 +84,7 @@ May need to install openssl in order to run `arangod`
 brew install openssl
 ```
 
-Open Web Interface at http://localhost:8529
+Open Web Interface at (http://localhost:8529)
 
 * `username`: *root*
 * `password`:
@@ -135,7 +136,7 @@ NOTE: Some-time the development mode app doesn't reflect code change immediately
 
 ## The development app will reflect any code change
 
-* Open http://localhost:8529/_db/voteable_development/voteable
+* Open (http://localhost:8529/_db/voteable_development/voteable)
 * Do the code change
 * Refresh the web page to reflect the change
 
@@ -148,7 +149,7 @@ Then view the log in the console
 tail -1 -f /Applications/ArangoDB-CLI.app/Contents/MacOS/opt/arangodb/var/log/arangodb3/arangod.log
 ```
 
-Or in ArangoDB web interface at http://localhost:8529/_db/voteable_development/_admin/aardvark/index.html#logs
+Or in ArangoDB web interface at (http://localhost:8529/_db/voteable_development/_admin/aardvark/index.html#logs)
 
 `WARNING:` **As far as I know, there is neither debugging tool nor console for Foxx apps**
 
@@ -163,7 +164,7 @@ Run test script in the terminal whenever you want
 
 **API Document**
 
-Open `ArangoDB's swagger` at http://localhost:8529/_db/voteable_development/_admin/aardvark/index.html#service/%2Fvoteable
+Open `ArangoDB's swagger` at (http://localhost:8529/_db/voteable_development/_admin/aardvark/index.html#service/%2Fvoteable)
 Then click on `API` tab
 
 # License
