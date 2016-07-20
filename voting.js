@@ -94,9 +94,6 @@ function edgeVote(voterId, voteableId, type, vote_points) {
     waitForSync: false,
 
     action: function () {
-
-      var db = require("internal").db;
-
       // UPSERT .. mean: If there is no vote _from voterId _to voteableId, create it with INSERT ...
       // Else update vote data with UPDATE ...
       var result = db._query(`
