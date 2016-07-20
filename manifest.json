@@ -10,7 +10,8 @@
     "main": "main.js",
     "scripts": {
         "setup": "scripts/setup.js",
-        "teardown": "scripts/teardown.js"
+        "teardown": "scripts/teardown.js",
+        "seed": "scripts/seed.js"
     },
     "tests": "test/**/*.js"
 }
