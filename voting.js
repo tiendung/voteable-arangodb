@@ -2,6 +2,7 @@
 const assert = require('assert');
 const _ = require('lodash');
 const db = require("@arangodb").db;
+const aql = require("@arangodb/aql");
 
 const UP = 'up';
 const DOWN = 'down';
@@ -32,9 +33,12 @@ function remainVoterIdsFieldName(type) {
 }
 
 function getCollectionNameFromId(voteableId) {
+  // Use database function AQL_PARSE_IDENTIFIER directly
+  return aql.AQL_PARSE_IDENTIFIER(voteableId).collection;
+
   // voteableId is a string with "collectionName/objectId" format. 'articles/1234' for example
-  // We extract the collectionName to use it in AQL query statement
-  return voteableId.split('/')[0];  
+  // We can extract the collectionName to use it in AQL query statement
+  // return voteableId.split('/')[0];
 }
 
 // Add upVoterIds and downVoterIds array in to the voteable objects
