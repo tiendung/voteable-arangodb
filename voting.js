@@ -85,8 +85,9 @@ function edgeVote(voterId, voteableId, type, vote_points) {
       write: [ 'votes', voteableCollection ]
     },
 
-    // Excecuting transaction synchronously to return the tabulated data after transaction is done
-    waitForSync: true,
+    // If you need 100% durability, change waitForSync to true. The db will wait until transaction data
+    // is written to disk before return the result
+    waitForSync: false,
 
     action: function () {
 
