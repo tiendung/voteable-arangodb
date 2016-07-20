@@ -5,11 +5,11 @@ Implement up / down voting solutions in Foxx using both embedded arrays and edge
 Those two voting algorithms are implemented as `embedVote` function and `edgeVote` function in `voting.js`
 
 **TODO**
- * Add unit tests to ensure correctness of `embedVote` and `edgeVote`
- * Create HTTP APIs to do to test Foxx performance and stability in real-life situations
- * Test performance of `embedVote` vs `edgeVote` to see advantage and trade-off of both methods
- * Re-implement `embedVote` and/or `edgeVote` in node.js + ArangoDB to compare performance between Foxx and node.js + db adapter
- * Re-implement `embedVote` and/or `edgeVote` in node.js + MongoDB to compare performance among node.js + ArangoDB, Foxx + ArangoDB and node.js + MongoDB
+* [ ] Add unit tests to ensure correctness of `embedVote` and `edgeVote`
+* [ ] Create HTTP APIs to do to test Foxx performance and stability in real-life situations
+* [ ] Test performance of `embedVote` vs `edgeVote` to see advantage and trade-off of both methods
+* [ ] Re-implement `embedVote` and/or `edgeVote` in node.js + ArangoDB to compare performance between Foxx and node.js + db adapter
+* [ ] Re-implement `embedVote` and/or `edgeVote` in node.js + MongoDB to compare performance among node.js + ArangoDB, Foxx + ArangoDB and node.js + MongoDB
 
 ### embedVote
 `embedVote` uses `upVoterIds` and `downVoterIds` to store vote data in-side the voteableObject so it can 
@@ -40,7 +40,7 @@ do voting and return tabulated data with-in single db query. Should be more effi
 
 ### Usage example
 
-```js
+```javascript
 var user1 = db.users.save({name: 'user1'});
 var user2 = db.users.save({name: 'user2'});
 var user3 = db.users.save({name: 'user3'});
@@ -72,71 +72,79 @@ voting.edgeVoteUp(user2._id, article2._id);
 voting.edgeVoteDown(user3._id, article2._id);
 ```
 
-## Install ArangoDB and create development and test databases
+___
 
-Download [ArangoDB 3.0.3 for MacOSX](https://www.arangodb.com/repositories/MacOSX-10.8/x86_64/ArangoDB-3.0.3-CLI-MacOS-10.8-x86_64.dmg)
 
-Copy `ArangoDB-CLI.app` to `/Applications` (open .dmg in Finder)
+## Install ArangoDB 3.x on Mac OSX using homebrew
 
-Run `ArangoDB-CLI.app` for the first time to start `arangod` in `Terminal`
-May need to install openssl in order to run `arangod`
 ```bash
-brew install openssl
+brew update
+brew install arangodb
+brew services start arangodb
 ```
 
-Open Web Interface at (http://localhost:8529)
+## Create development and test databases
+
+Open Web Interface at [localhost:8529](http://localhost:8529)
 
 * `username`: *root*
 * `password`:
-* Then select db `_system` or press enter
+* Then Select DB `_system` or press enter
 * Click `DATABASES` > `Add Database` > enter **voteable_development** to `Name*:` > click `Create`
 * Repeat above step to create **lxcd_test**
 * Click `DB:_SYSTEM` at the top-right conner, click on drop down then select `voteable_development`
 * Click `Select DB: voteable_development` or press enter
 
 
+Or using terminal
+
+```bash
+arangosh --server.authentication false
+db._createDatabase('voteable_development')
+db._createDatabase('voteable_test')
+```
+
 ## Link source code to Arango Foxx app
 Link source code to `voteable_development` database's `voteable` Foxx app so you don't have to reploy everytime you change your code.
 
 ```bash
-mkdir /Applications/ArangoDB-CLI.app/Contents/MacOS/opt/arangodb/var/lib/arangodb3-apps/_db/voteable_development/voteable
-ln -s ~/src/voteable-arangodb /Applications/ArangoDB-CLI.app/Contents/MacOS/opt/arangodb/var/lib/arangodb3-apps/_db/voteable_development/voteable/APP
+mkdir /usr/local/var/lib/arangodb3-apps/_db/voteable_development/voteable
+ln -s ~/src/voteable-arangodb /usr/local/var/lib/arangodb3-apps/_db/voteable_development/voteable/APP
 ```
 
 Setup `test` app in test database
 ```bash
-mkdir /Applications/ArangoDB-CLI.app/Contents/MacOS/opt/arangodb/var/lib/arangodb3-apps/_db/voteable_test/voteable
-ln -s ~/src/voteable-arangodb /Applications/ArangoDB-CLI.app/Contents/MacOS/opt/arangodb/var/lib/arangodb3-apps/_db/voteable_test/voteable/APP
+mkdir /usr/local/var/lib/arangodb3-apps/_db/voteable_test/voteable
+ln -s ~/src/voteable-arangodb /usr/local/var/lib/arangodb3-apps/_db/voteable_test/voteable/APP
 ```
 
-*Restart the `arangod` to reflect the change by killing the `arangod` process if it's still running, then re-run `ArangoDB-CLI.app`*
+*Restart the `arangod` to reflect changes`*
 ```bash
-ps aux | grep arangod
-kill -2 arangod_pid
+brew services restart arangodb
 ```
 
 ## Change to development mode and run setup script
 
 ```bash
 # Set development mode
-/Applications/ArangoDB-CLI.app/Contents/MacOS/foxx-manager development /voteable --server.database voteable_development --server.authentication false
+foxx-manager development /voteable --server.database voteable_development --server.authentication false
 # Remove data if exists
-/Applications/ArangoDB-CLI.app/Contents/MacOS/foxx-manager teardown /voteable --server.database voteable_development --server.authentication false
+foxx-manager teardown /voteable --server.database voteable_development --server.authentication false
 # Setup database and seeding data
-/Applications/ArangoDB-CLI.app/Contents/MacOS/foxx-manager setup /voteable --server.database voteable_development --server.authentication false
+foxx-manager setup /voteable --server.database voteable_development --server.authentication false
 ```
 
 NOTE: Some-time the development mode app doesn't reflect code change immediately. You have to restart the app manually by running command
 ```bash
-/Applications/ArangoDB-CLI.app/Contents/MacOS/foxx-manager development /voteable --server.database voteable_development --server.authentication false
-# Or use pre-built script for short
+foxx-manager development /voteable --server.database voteable_development --server.authentication false
+# Or use pre-built script
 ./restartApps.sh
 ```
 
 
 ## The development app will reflect any code change
 
-* Open (http://localhost:8529/_db/voteable_development/voteable)
+* Open [localhost development app](http://localhost:8529/_db/voteable_development/voteable)
 * Do the code change
 * Refresh the web page to reflect the change
 
@@ -146,10 +154,10 @@ ArangoDB's Foxx is JavaScript so just use `console.log()` to print out any infor
 
 Then view the log in the console
 ```bash
-tail -1 -f /Applications/ArangoDB-CLI.app/Contents/MacOS/opt/arangodb/var/log/arangodb3/arangod.log
+tail -1 -f /usr/local/var/log/arangodb3/arangod.log
 ```
 
-Or in ArangoDB web interface at (http://localhost:8529/_db/voteable_development/_admin/aardvark/index.html#logs)
+Or in ArangoDB web interface at [localhost voteable_development](http://localhost:8529/_db/voteable_development/_admin/aardvark/index.html#logs)
 
 `WARNING:` **As far as I know, there is neither debugging tool nor console for Foxx apps**
 
@@ -164,7 +172,7 @@ Run test script in the terminal whenever you want
 
 **API Document**
 
-Open `ArangoDB's swagger` at (http://localhost:8529/_db/voteable_development/_admin/aardvark/index.html#service/%2Fvoteable)
+Open `ArangoDB's swagger` at [localhost voteable_development](http://localhost:8529/_db/voteable_development/_admin/aardvark/index.html#service/%2Fvoteable)
 Then click on `API` tab
 
 # License
