@@ -3,6 +3,7 @@ const assert = require('assert');
 const _ = require('lodash');
 const db = require("@arangodb").db;
 const aql = require("@arangodb/aql");
+const aqlQuery = require("@arangodb").aql;
 
 const UP = 'up';
 const DOWN = 'down';
@@ -46,17 +47,13 @@ function getCollectionNameFromId(voteableId) {
 function embedVote(voterId, voteableId, type, vote_points) {
   assert(isValidVoteType(type), "vote type must be in " + VOTE_TYPES);
 
-  var voterIdsField = voterIdsFieldName(type);
-  var remainVoterIdsField = remainVoterIdsFieldName(type);
-  var voteableCollection = getCollectionNameFromId(voteableId);
-
   var queryStatement = `
-    LET voteableObj = DOCUMENT("${voteableId}")
+    LET voteableObj = DOCUMENT(@voteableId)
 
     UPDATE voteableObj WITH {
-      ${voterIdsField}: PUSH( voteableObj.${voterIdsField}, "${voterId}", true ),
-      ${remainVoterIdsField}: REMOVE_VALUE( voteableObj.${remainVoterIdsField}, "${voterId}", 1 )
-    } IN ${voteableCollection}
+      @voterIdsField: PUSH( voteableObj.@voterIdsField, @voterId, true ),
+      @remainVoterIdsField: REMOVE_VALUE( voteableObj.@remainVoterIdsField, @voterId, 1 )
+    } IN @@voteableCollection
 
       LET upVotesCount = LENGTH( NEW.upVoterIds )
       LET downVotesCount = LENGTH( NEW.downVoterIds )
@@ -69,7 +66,14 @@ function embedVote(voterId, voteableId, type, vote_points) {
       }
   `
   // console.log(queryStatement.replace(/\s+/g, " ")); /* DEBUG */
-  return db._query(queryStatement).toArray()[0];
+  // console.infoLines(require('util').inspect(queryStatement)); /* INSPECT LIKE A PRO */
+  return db._query(queryStatement, {
+    voteableId: voteableId,
+    voterId: voterId,
+    voterIdsField: voterIdsFieldName(type),
+    remainVoterIdsField: remainVoterIdsFieldName(type),
+    '@voteableCollection': getCollectionNameFromId(voteableId)
+  }).toArray()[0];
 }
 
 
@@ -97,24 +101,28 @@ function edgeVote(voterId, voteableId, type, vote_points) {
       // UPSERT .. mean: If there is no vote _from voterId _to voteableId, create it with INSERT ...
       // Else update vote data with UPDATE ...
       var result = db._query(`
-        UPSERT { _from: "${voterId}", _to: "${voteableId}" }
-        INSERT { _from: "${voterId}", _to: "${voteableId}", type: "${type}", count: 1, createdAt: DATE_NOW() }
-        UPDATE { type: "${type}", count: OLD.count + 1,  updatedAt: DATE_NOW() } IN votes
-        RETURN { isNewVote: IS_NULL(OLD), isSameVote: OLD && (OLD.type == NEW.type) }
-      `).toArray()[0];
+        UPSERT { _from: @voterId, _to: @voteableId }
+        INSERT { _from: @voterId, _to: @voteableId, type: @type, count: 1, createdAt: DATE_NOW() }
+        UPDATE { type: @type, count: OLD.count + 1,  updatedAt: DATE_NOW() } IN votes
+        RETURN { isNewVote: IS_NULL(OLD), isSameVote: !!OLD && (OLD.type == NEW.type) }
+      `, {
+        voterId: voterId,
+        voteableId: voteableId,
+        type: type
+      }).toArray()[0];
       // console.log(result); /* DEBUG */
 
       if (result.isSameVote) {
 
         tabulatedData = db._query(`
-          LET voteableObj = DOCUMENT("${voteableId}")
+          LET voteableObj = DOCUMENT(@voteableId)
             RETURN {
               id: voteableObj._id,
               upVotesCount: voteableObj.upVotesCount,
               downVotesCount: voteableObj.downVotesCount,
               totalVotePoint: voteableObj.totalVotePoint
             }
-        `).toArray()[0];
+        `, { voteableId: voteableId }).toArray()[0];
 
       } else { // new-vote or re-vote
 
@@ -141,16 +149,16 @@ function edgeVote(voterId, voteableId, type, vote_points) {
         // console.log(downVotesCountDelta); /* DEBUG */
 
         tabulatedData = db._query(`
-          LET voteableObj = DOCUMENT("${voteableId}")
+          LET voteableObj = DOCUMENT(@voteableId)
 
-            LET upVotesCount = voteableObj.upVotesCount + ${upVotesCountDelta}
-            LET downVotesCount = voteableObj.downVotesCount + ${downVotesCountDelta}
+            LET upVotesCount = voteableObj.upVotesCount + @upVotesCountDelta
+            LET downVotesCount = voteableObj.downVotesCount + @downVotesCountDelta
 
             UPDATE voteableObj WITH {
                 upVotesCount: upVotesCount,
                 downVotesCount: downVotesCount,
                 totalVotePoint: ${vote_points[UP]}*upVotesCount + ${vote_points[DOWN]}*downVotesCount
-            } IN ${voteableCollection}
+            } IN @@voteableCollection
 
             RETURN {
               id: NEW._id,
@@ -158,7 +166,12 @@ function edgeVote(voterId, voteableId, type, vote_points) {
               downVotesCount: NEW.downVotesCount,
               totalVotePoint: NEW.totalVotePoint
             }
-        `).toArray()[0];
+        `, {
+          voteableId: voteableId,
+          upVotesCountDelta: upVotesCountDelta,
+          downVotesCountDelta: downVotesCountDelta,
+          '@voteableCollection': voteableCollection
+        }).toArray()[0];
       }
     } // action
   }); // _executeTransaction
